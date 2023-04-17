@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"log"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -14,28 +16,34 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		//origin := r.Header.Get("Origin")
+		return true //origin == "http://127.0.0.1:8080"
+	},
 }
 
 func main() {
 	go cleanUpWebSocketClients()
 	// Start Echo server and WebSocket endpoint.
 	e := echo.New()
+	e.Use(middleware.CORS())
 	e.GET("/ws", handleWebSocket)
 	go e.Start(":8085")
 
 	// Start 5 goroutines.
 	var wg sync.WaitGroup
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 1; i++ {
 		wg.Add(1)
 		go func(goroutineNum int) {
 			defer wg.Done()
 			// Wait for a user ID to be passed, sleep for a random number of seconds, and then print it out.
 			for userId := range userIds {
-				sleepTime := time.Duration(rand.Intn(5)) * time.Second // Sleep for up to 5 seconds.
+				//sleepTime := time.Duration(rand.Intn(5)) * time.Second // Sleep for up to 5 seconds.
+				sleepTime := time.Second * 3
 				time.Sleep(sleepTime)
 				//message := fmt.Sprintf("Goroutine %v: User ID: %v", goroutineNum, userId)
 				//broadcastWebSocket(message)
-				fmt.Printf("routine %v User ID: %v sleeping %v\n", goroutineNum, userId, sleepTime)
+				//fmt.Printf("routine %v User ID: %v sleeping %v\n", goroutineNum, userId, sleepTime)
 				broadcast(strconv.Itoa(goroutineNum), userId)
 
 			}
@@ -43,7 +51,7 @@ func main() {
 	}
 
 	// Loop through 100 user IDs and pass them to the goroutines only if there is one available.
-	for i := 1; i <= 100; i++ {
+	for i := 1; i <= 200; i++ {
 		userIds <- fmt.Sprintf("user%d", i)
 	}
 
@@ -58,6 +66,8 @@ func handleWebSocket(c echo.Context) error {
 	fmt.Printf("handleWebSocket")
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
+		fmt.Println("error in ws handler")
+		fmt.Println(err)
 		return err
 	}
 	defer ws.Close()
