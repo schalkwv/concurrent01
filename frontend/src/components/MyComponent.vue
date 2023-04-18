@@ -13,13 +13,13 @@ export default {
     setup() {
         const state = reactive({
             users: ['', '', '', '', ''],
-            colors: ['red', 'green', 'blue', 'yellow', 'purple']
+            colors: ['red', 'green', 'blue', 'black', 'purple']
         });
 
         const updateUser = (goroutine, userID) => {
             console.log("ws")
             const index = Number(goroutine) - 1;
-            state.users[index] = userID;
+            state.users[index] += ' ' + userID;
         };
 
         onMounted(() => {
@@ -32,9 +32,24 @@ export default {
             // };
             socket.addEventListener('message', (event) => {
                 console.log(event.data)
-                    const data = JSON.parse(event.data);
-                    const { goroutine, userID } = data;
-                    updateUser(goroutine, userID);
+                try {
+                    const lines = event.data.split('\n');
+                    lines.forEach((line) => {
+                        try {
+                            const data = JSON.parse(line);
+                            const { goroutine, userID } = data;
+                            updateUser(goroutine, userID);
+                            // console.log(data);
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    });
+                    // const data = JSON.parse(event.data);
+                    // const { goroutine, userID } = data;
+                    // updateUser(goroutine, userID);
+                } catch (e) {
+                    // console.log(e)
+                }
 
             });
             socket.addEventListener('open', () => {
