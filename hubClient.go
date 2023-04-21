@@ -36,8 +36,8 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// Client is a middleman between the websocket connection and the hub.
-type Client struct {
+// HubClient is a middleman between the websocket connection and the hub.
+type HubClient struct {
 	roomID string
 
 	hub *Hub
@@ -54,7 +54,7 @@ type Client struct {
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (c *Client) readPump() {
+func (c *HubClient) readPump() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
@@ -83,7 +83,7 @@ func (c *Client) readPump() {
 // A goroutine running writePump is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (c *Client) writePump() {
+func (c *HubClient) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -131,7 +131,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request, roomId string) {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), roomID: roomId}
+	client := &HubClient{hub: hub, conn: conn, send: make(chan []byte, 256), roomID: roomId}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

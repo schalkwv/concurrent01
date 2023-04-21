@@ -7,24 +7,24 @@ type message struct {
 
 type Hub struct {
 	// Registered clients by room.
-	rooms map[string]map[*Client]bool
+	rooms map[string]map[*HubClient]bool
 
 	// Inbound messages from the clients.
 	broadcast chan message
 
 	// Register requests from the clients.
-	register chan *Client
+	register chan *HubClient
 
 	// Unregister requests from clients.
-	unregister chan *Client
+	unregister chan *HubClient
 }
 
 func newHub() *Hub {
 	return &Hub{
 		broadcast:  make(chan message),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		rooms:      make(map[string]map[*Client]bool),
+		register:   make(chan *HubClient),
+		unregister: make(chan *HubClient),
+		rooms:      make(map[string]map[*HubClient]bool),
 	}
 }
 
@@ -35,7 +35,7 @@ func (h *Hub) run() {
 			room := h.rooms[client.roomID]
 			if room == nil {
 				// First client in the room, create a new one
-				room = make(map[*Client]bool)
+				room = make(map[*HubClient]bool)
 				h.rooms[client.roomID] = room
 			}
 			room[client] = true
