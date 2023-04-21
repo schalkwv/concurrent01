@@ -16,10 +16,10 @@ export default {
             colors: ['red', 'green', 'blue', 'black', 'purple']
         });
 
-        const updateUser = (goroutine, userID) => {
+        const updateUser = (goroutine, info) => {
             console.log("ws")
             const index = Number(goroutine) - 1;
-            state.users[index] += ' ' + userID;
+            state.users[index] += ' ' + info;
         };
 
         onMounted(() => {
@@ -37,8 +37,8 @@ export default {
                     lines.forEach((line) => {
                         try {
                             const data = JSON.parse(line);
-                            const { goroutine, userID } = data;
-                            updateUser(goroutine, userID);
+                            const { goroutine, info } = data;
+                            updateUser(goroutine, info);
                             // console.log(data);
                         } catch (error) {
                             console.error(error);

@@ -15,10 +15,10 @@ type application struct {
 	hub *Hub
 }
 
-func (app *application) Broadcast(goroutineNum string, userID string) {
+func (app *application) Broadcast(goroutineNum string, info string) {
 	data := map[string]string{
 		"goroutine": goroutineNum,
-		"userID":    userID,
+		"info":      info,
 	}
 	jsonStr, err := json.Marshal(data)
 	if err != nil {
@@ -54,12 +54,12 @@ func main() {
 		go func(goroutineNum int) {
 			defer wg.Done()
 			// Wait for a user ID to be passed, sleep for a random number of seconds, and then print it out.
-			for userId := range userIds {
+			for workItem := range workItems {
 				sleepTime := time.Duration(rand.Intn(5)) * time.Second
-				fmt.Printf("++start routine %v User ID: %v sleeping %v\n", goroutineNum, userId, sleepTime)
+				fmt.Printf("++start routine %v User ID: %v sleeping %v\n", goroutineNum, workItem, sleepTime)
 				time.Sleep(sleepTime)
-				fmt.Printf("--end routine %v User ID: %v sleeping %v\n", goroutineNum, userId, sleepTime)
-				app.Broadcast(strconv.Itoa(goroutineNum), userId)
+				fmt.Printf("--end routine %v User ID: %v sleeping %v\n", goroutineNum, workItem, sleepTime)
+				app.Broadcast(strconv.Itoa(goroutineNum), workItem)
 
 			}
 		}(i)
@@ -67,13 +67,13 @@ func main() {
 
 	// Loop through 100 user IDs and pass them to the goroutines only if there is one available.
 	for i := 1; i <= 50; i++ {
-		userIds <- fmt.Sprintf("%d", i)
+		workItems <- fmt.Sprintf("%d", i)
 	}
 
-	close(userIds)
+	close(workItems)
 	wg.Wait()
 	//give the socket time to broadcast
 	time.Sleep(5 * time.Second)
 }
 
-var userIds = make(chan string, 1)
+var workItems = make(chan string, 1)
